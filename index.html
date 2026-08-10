@@ -10,7 +10,6 @@
     --clay:#8C5B3E;
     --gold:#B08B33;
     --card:#F7F5EE;
-    --done:#4B5D46;
     --font-head: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
     --font-mono: "SF Mono", "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
   }
@@ -31,7 +30,6 @@
 
   .subhead{font-size:12.5px;color:var(--ink-soft);margin:10px 0 22px;line-height:1.5;}
 
-  /* Flock trail — signature progress element */
   .trail{
     display:flex;gap:3px;align-items:flex-end;margin:18px 0 28px;
     padding:14px 12px;background:var(--card);border:1px solid var(--paper-line);border-radius:3px;
@@ -45,6 +43,7 @@
   .trail-week.complete .trail-mark{background:var(--moss);color:#F7F5EE;border-color:var(--moss-deep);}
   .trail-week.active .trail-mark{outline:2px solid var(--clay);outline-offset:1px;}
   .trail-label{font-size:9.5px;color:var(--ink-soft);text-align:center;}
+  .trail-week.learn .trail-mark{border-color:var(--gold);}
 
   .progress-line{font-size:12px;color:var(--moss-deep);margin-bottom:6px;letter-spacing:0.5px;}
   .progress-bar-outer{height:6px;background:#E3DFD2;border-radius:3px;overflow:hidden;}
@@ -102,7 +101,6 @@
   .reset-btn:hover{background:var(--clay);color:#F7F5EE;}
 
   .loading{text-align:center;padding:40px;color:var(--ink-soft);font-size:12px;}
-  .err{color:#8C5B3E;font-size:11px;text-align:center;padding:8px;}
 
   @media (max-width:560px){
     .trail{overflow-x:auto;}
@@ -117,7 +115,7 @@
     <div class="dates">11 Aug – 01 Oct 2026</div>
   </div>
   <div class="subhead">
-    Daily field log for the sheep biomodeling project — mortality, feed, growth, pregnancy and breeding models, with the Kalman/RL adaptive layer. Tap a week marker or a day to open it. Checks are saved automatically.
+    Daily field log for the sheep biomodeling project. Week 1 is dedicated to learning the tools (Python, NumPy, pandas, Seaborn, Matplotlib, Plotly, LaTeX); everything after is deliberately kept lean. Tap a week marker or a day to open it — checks save automatically.
   </div>
 
   <div class="progress-line" id="overallLine">Loading progress…</div>
@@ -136,235 +134,194 @@
 (function(){
 
   const WEEKS = [
-    { label: "Week 1 · Foundations", range: "Aug 11–17", days: [
-      { date: "2026-08-11", title: "Env setup + toy ODE", tasks: [
-        "Set up Python (Colab/Jupyter); confirm scipy, numpy, pandas import cleanly",
-        "Run solve_ivp on a toy exponential-decay example",
-        "Create Zotero library; add 3 seed references"
+    { label: "Week 1 · Learn the tools", range: "Aug 11–17", learn:true, days: [
+      { date: "2026-08-11", title: "Python fundamentals", tasks: [
+        "Python basics in Colab — variables, loops, functions",
+        "Pull Lamb Mortality farm records into a CSV"
       ]},
-      { date: "2026-08-12", title: "Curve fitting + mortality data", tasks: [
-        "Practice curve_fit on synthetic data",
-        "Pull lamb mortality farm records into a working CSV",
-        "Read 1 paper on hazard/survival models in livestock"
+      { date: "2026-08-12", title: "NumPy", tasks: [
+        "NumPy — arrays, vectorized ops, basic linear algebra",
+        "Clean the Mortality dataset (units, missing values)"
       ]},
-      { date: "2026-08-13", title: "Clean mortality data", tasks: [
-        "Clean mortality data — missing values, consistent units",
-        "Practice solve_ivp on a 2-compartment toy model",
-        "Log every data source in Zotero with full citation"
+      { date: "2026-08-13", title: "Pandas", tasks: [
+        "Pandas — DataFrames, filtering, groupby, merging",
+        "Pull Feed ingredient data + ICAR nutrient tables"
       ]},
-      { date: "2026-08-14", title: "Feed data + LP basics", tasks: [
-        "Pull feed ingredient list, costs, ICAR nutrient tables",
-        "Solve one toy linear programming problem in PuLP",
-        "Watch 1 RL intro video — state/action/reward"
+      { date: "2026-08-14", title: "Matplotlib + Seaborn", tasks: [
+        "Matplotlib — line/scatter plots; Seaborn — distributions, pairplots",
+        "Clean the Feed dataset"
       ]},
-      { date: "2026-08-15", title: "Clean feed + growth data", tasks: [
-        "Clean feed dataset; build nutrient requirement reference table",
-        "Pull weight-at-age records per animal",
-        "Watch 1 more RL intro video"
+      { date: "2026-08-15", title: "Plotly + LaTeX intro", tasks: [
+        "Plotly — one interactive chart (hover/zoom)",
+        "Overleaf — \"Learn LaTeX in 30 minutes\"; open a paper template",
+        "Pull Growth (weight-at-age) records"
       ]},
-      { date: "2026-08-16", title: "Clean growth + pregnancy data", tasks: [
-        "Clean growth data; flag missing/irregular ages",
-        "Pull pregnancy & breeding records (BCS, mating dates, outcomes)",
-        "Draft state / action / reward definitions on paper"
+      { date: "2026-08-16", title: "SciPy basics", tasks: [
+        "scipy.integrate.solve_ivp — run one toy ODE example",
+        "scipy.optimize.curve_fit — fit a toy curve",
+        "Pull Pregnancy & Breeding records"
       ]},
-      { date: "2026-08-17", title: "Week 1 review", tasks: [
-        "Confirm all 5 datasets are cleaned and saved",
-        "Note open data gaps per model",
-        "Review week goals vs. actual — adjust week 2 if behind"
+      { date: "2026-08-17", title: "End-to-end dry run", tasks: [
+        "One mini pipeline: load CSV → clean → plot → fit a toy curve",
+        "Clean Pregnancy & Breeding datasets",
+        "Set up Zotero library; log all data sources with citations"
       ]}
     ]},
 
     { label: "Week 2 · Baseline ODEs", range: "Aug 18–24", days: [
       { date: "2026-08-18", title: "Mortality — build", tasks: [
-        "Build hazard-decay ODE skeleton (dS/dt = -h·S)",
-        "Fit logistic regression coefficients on real data"
+        "Build hazard-decay ODE; fit logistic coefficients on real data"
       ]},
       { date: "2026-08-19", title: "Mortality — validate", tasks: [
-        "Plot fitted survival curve vs. real data",
-        "Sanity-check hazard direction/magnitude makes sense"
+        "Plot fitted survival curve vs. real data"
       ]},
       { date: "2026-08-20", title: "Feed — build", tasks: [
-        "Build LP ration model (or rumen-pool ODE) in PuLP/scipy",
-        "Run baseline least-cost ration optimization"
+        "Build LP ration model in PuLP; run baseline optimization"
       ]},
       { date: "2026-08-21", title: "Feed — validate", tasks: [
-        "Check optimized ration meets all nutrient constraints",
-        "Compare against your farm's actual current ration"
+        "Check optimized ration vs. real constraints and current ration"
       ]},
       { date: "2026-08-22", title: "Growth — build & fit", tasks: [
-        "Fit Gompertz curve per breed using curve_fit",
-        "Plot fitted curves against real weight-at-age points"
+        "Fit Gompertz curve per breed with curve_fit"
       ]},
       { date: "2026-08-23", title: "Pregnancy — build", tasks: [
-        "Build reproductive-state ODE (Open→Bred→Pregnant→Lambed)",
-        "Estimate transition rates from real breeding records"
+        "Build reproductive-state ODE; estimate transition rates"
       ]},
-      { date: "2026-08-24", title: "Breeding — build + week review", tasks: [
-        "Build selection-index / Price-equation baseline",
-        "Review all 5 baseline models side by side",
-        "List which models look strongest going into validation week"
+      { date: "2026-08-24", title: "Breeding — build + review", tasks: [
+        "Build selection-index/Price-equation baseline",
+        "Quick review of all 5 baselines together"
       ]}
     ]},
 
     { label: "Week 3 · Validate & choose priority", range: "Aug 25–31", days: [
       { date: "2026-08-25", title: "Fit checks — Mortality + Growth", tasks: [
-        "Goodness-of-fit check: Mortality model",
-        "Goodness-of-fit check: Growth model"
+        "Goodness-of-fit: Mortality + Growth models"
       ]},
       { date: "2026-08-26", title: "Fit checks — Feed + Pregnancy", tasks: [
-        "Validate Feed model output against real constraints",
-        "Goodness-of-fit check: Pregnancy model"
+        "Validate Feed output; goodness-of-fit: Pregnancy model"
       ]},
       { date: "2026-08-27", title: "Fit checks — Breeding + sensitivity setup", tasks: [
-        "Sanity-check Breeding model projections",
-        "Set up sensitivity analysis framework (±10–20% parameter sweep)"
+        "Sanity-check Breeding projections; set up sensitivity sweep"
       ]},
-      { date: "2026-08-28", title: "Run sensitivity analysis", tasks: [
-        "Run sensitivity sweep across all 5 models",
-        "Record which parameters move outcomes the most"
+      { date: "2026-08-28", title: "Sensitivity analysis", tasks: [
+        "Run ±10–20% parameter sweep across all 5 models"
       ]},
       { date: "2026-08-29", title: "Literature sanity-check", tasks: [
-        "Compare fitted parameters against published values",
-        "Flag any wildly divergent results for a bug check"
+        "Compare fitted parameters against published values"
       ]},
       { date: "2026-08-30", title: "Choose priority model(s)", tasks: [
-        "Decide which 1–2 models get the Kalman/RL layer",
-        "Write a short justification (data richness/quality)"
+        "Decide which 1–2 models get the Kalman/RL layer + justify"
       ]},
       { date: "2026-08-31", title: "Mentor review of baselines", tasks: [
-        "Walk mentor through all 5 baseline models",
-        "Document open issues / questions before month 2"
+        "Walk mentor through all 5 baselines; log open issues"
       ]}
     ]},
 
     { label: "Week 4 · Kalman baseline", range: "Sep 1–7", days: [
       { date: "2026-09-01", title: "Kalman basics", tasks: [
-        "Learn filterpy basics with a toy Kalman example",
-        "Read a short primer on state-space models"
+        "filterpy toy example; read a short state-space primer"
       ]},
       { date: "2026-09-02", title: "State-space formulation", tasks: [
-        "Write priority model's ODE in state-space form",
-        "Identify which parameter(s) will be adaptively updated"
+        "Write priority model's ODE in state-space form"
       ]},
       { date: "2026-09-03", title: "Implement filter", tasks: [
-        "Implement Kalman update step in code",
-        "Run on a short synthetic test sequence first"
+        "Implement Kalman update; test on synthetic data first"
       ]},
       { date: "2026-09-04", title: "Run on real data", tasks: [
-        "Run Kalman-updated model on real sequential farm data",
-        "Plot parameter estimate evolving over time"
+        "Run Kalman-updated model on real sequential farm data"
       ]},
       { date: "2026-09-05", title: "Compare vs static fit", tasks: [
-        "Compare Kalman-updated predictions vs. static-fit predictions",
-        "Compute error metrics for both"
+        "Compare Kalman-updated vs. static-fit error metrics"
       ]},
       { date: "2026-09-06", title: "Debug & refine", tasks: [
-        "Debug/refine Kalman implementation",
-        "Re-run and re-check error metrics"
+        "Debug/refine; re-check error metrics"
       ]},
       { date: "2026-09-07", title: "Document + prep RL", tasks: [
-        "Write up Kalman results (this is your guaranteed baseline)",
-        "Sketch the RL environment design on paper"
+        "Write up Kalman results; sketch RL environment design"
       ]}
     ]},
 
     { label: "Week 5 · RL layer", range: "Sep 8–14", days: [
       { date: "2026-09-08", title: "RL setup", tasks: [
-        "Install gymnasium + stable-baselines3",
-        "Run a stock toy RL example to confirm setup works"
+        "Install gymnasium + stable-baselines3; run one toy example"
       ]},
       { date: "2026-09-09", title: "Custom environment", tasks: [
-        "Define custom Gym environment wrapping priority ODE model",
-        "Confirm environment resets/steps without errors"
+        "Define Gym environment wrapping the priority ODE model"
       ]},
       { date: "2026-09-10", title: "Reward function", tasks: [
-        "Define reward function (negative prediction error)",
-        "Sanity-check reward values on a few manual steps"
+        "Define reward (negative prediction error); sanity-check values"
       ]},
       { date: "2026-09-11", title: "First training run", tasks: [
-        "Run first PPO/DQN training pass",
-        "Confirm training runs end-to-end without crashing"
+        "Run first PPO/DQN pass end-to-end without crashing"
       ]},
       { date: "2026-09-12", title: "Tune training", tasks: [
-        "Adjust episodes/learning rate",
-        "Monitor reward curve for signs of learning"
+        "Adjust episodes/learning rate; watch reward curve"
       ]},
       { date: "2026-09-13", title: "Compare all three", tasks: [
-        "Compare RL agent vs. Kalman baseline vs. static fit",
-        "Tabulate error metrics for all three approaches"
+        "Tabulate RL vs. Kalman vs. static-fit error metrics"
       ]},
       { date: "2026-09-14", title: "Document honestly", tasks: [
-        "Write up RL results, including limitations if it underperforms",
-        "Decide final framing (RL layer vs. Kalman-only) for the paper"
+        "Write up RL results and limitations; lock final framing"
       ]}
     ]},
 
     { label: "Week 6 · Consolidate", range: "Sep 15–21", days: [
       { date: "2026-09-15", title: "Debug buffer", tasks: [
-        "Use as buffer day if RL/Kalman needs more debugging",
-        "Otherwise: finalize priority model's full results"
+        "Buffer for RL/Kalman debugging, or finalize priority model results"
       ]},
       { date: "2026-09-16", title: "Write-up: Mortality", tasks: [
-        "Finalize Lamb Mortality methods + results section notes"
+        "Finalize Mortality methods + results notes"
       ]},
       { date: "2026-09-17", title: "Write-up: Feed", tasks: [
-        "Finalize Feed Optimization methods + results section notes"
+        "Finalize Feed methods + results notes"
       ]},
       { date: "2026-09-18", title: "Write-up: Growth", tasks: [
-        "Finalize Growth model methods + results section notes"
+        "Finalize Growth methods + results notes"
       ]},
       { date: "2026-09-19", title: "Write-up: Pregnancy", tasks: [
-        "Finalize Pregnancy model methods + results section notes"
+        "Finalize Pregnancy methods + results notes"
       ]},
       { date: "2026-09-20", title: "Write-up: Breeding", tasks: [
-        "Finalize Breeding model methods + results section notes"
+        "Finalize Breeding methods + results notes"
       ]},
       { date: "2026-09-21", title: "Figures + citations pass", tasks: [
-        "Compile all figures into one folder",
-        "Confirm every figure has a citation/credit line"
+        "Compile figures; confirm every one has a citation/credit line"
       ]}
     ]},
 
     { label: "Week 7 · Write the paper", range: "Sep 22–28", days: [
       { date: "2026-09-22", title: "Introduction", tasks: [
-        "Write Introduction + literature review section"
+        "Write Introduction + literature review"
       ]},
       { date: "2026-09-23", title: "Methods", tasks: [
-        "Write Methods section covering all 5 models + AI layer"
+        "Write Methods — all 5 models + AI layer"
       ]},
       { date: "2026-09-24", title: "Results", tasks: [
-        "Write Results section with figures and tables"
+        "Write Results with figures and tables"
       ]},
       { date: "2026-09-25", title: "Discussion", tasks: [
-        "Write Discussion section — interpretation + limitations"
+        "Write Discussion — interpretation + limitations"
       ]},
       { date: "2026-09-26", title: "Conclusion + references", tasks: [
-        "Write Conclusion",
-        "Check all references formatted consistently (APA/IEEE via Zotero)"
+        "Write Conclusion; check reference formatting via Zotero"
       ]},
       { date: "2026-09-27", title: "Abstract + quad chart draft", tasks: [
-        "Draft 250-word abstract",
-        "Draft quad chart content (4 quadrants)"
+        "Draft 250-word abstract; draft quad chart content"
       ]},
       { date: "2026-09-28", title: "Quad chart + AI disclosure", tasks: [
-        "Build quad chart image in Canva (light bg, dark text, 18pt+ font)",
-        "Write up AI usage disclosure summary from your prompt log"
+        "Build quad chart image; write AI usage disclosure summary"
       ]}
     ]},
 
     { label: "Buffer · Finish & submit", range: "Sep 29–Oct 1", days: [
       { date: "2026-09-29", title: "Mentor review pass", tasks: [
-        "Full mentor review of paper + abstract + quad chart",
-        "Revise based on feedback"
+        "Full mentor review; revise based on feedback"
       ]},
       { date: "2026-09-30", title: "Video + final citation check", tasks: [
-        "Record 90-second project video",
-        "Final pass: every graphic cited, every claim sourced"
+        "Record 90-second video; final citation/sourcing check"
       ]},
       { date: "2026-10-01", title: "Submit", tasks: [
-        "Confirm all files ready: synopsis, paper, video",
-        "Submit on IRIS website",
-        "Save a backup copy of everything submitted"
+        "Confirm files ready, submit on IRIS website, save a backup"
       ]}
     ]}
   ];
@@ -375,8 +332,8 @@
   const overallBar = document.getElementById('overallBar');
   const resetBtn = document.getElementById('resetBtn');
 
-  let allState = {}; // { "2026-08-11": [true,false,...] }
-  let allNotes = {}; // { "2026-08-11": "note text" }
+  let allState = {};
+  let allNotes = {};
 
   function todayStr(){
     const d = new Date();
@@ -406,7 +363,7 @@
     }catch(e){ console.error('note save failed', e); }
   }
 
-  function dayCompletion(date, taskCount){
+  function dayCompletion(date){
     const st = allState[date];
     if(!st) return 0;
     return st.filter(Boolean).length;
@@ -422,7 +379,7 @@
       let weekTotal = 0, weekDone = 0;
       week.days.forEach(day => {
         weekTotal += day.tasks.length;
-        weekDone += dayCompletion(day.date, day.tasks.length);
+        weekDone += dayCompletion(day.date);
       });
       totalTasks += weekTotal;
       totalDone += weekDone;
@@ -436,7 +393,7 @@
       wb.appendChild(wt);
 
       week.days.forEach(day => {
-        const done = dayCompletion(day.date, day.tasks.length);
+        const done = dayCompletion(day.date);
         const total = day.tasks.length;
         const card = document.createElement('div');
         card.className = 'day-card';
@@ -469,8 +426,7 @@
             allState[day.date] = arr;
             row.classList.toggle('checked', cb.checked);
             await saveDay(day.date, arr);
-            renderAll(); // refresh counts/progress
-            // re-open the same card after re-render
+            renderAll();
             const reopened = document.getElementById('card-' + day.date);
             if(reopened) reopened.classList.add('open');
           });
@@ -509,12 +465,12 @@
       let isActiveWeek = false;
       week.days.forEach(day => {
         weekTotal += day.tasks.length;
-        weekDone += dayCompletion(day.date, day.tasks.length);
+        weekDone += dayCompletion(day.date);
         if(day.date === today) isActiveWeek = true;
       });
       const complete = weekTotal>0 && weekDone === weekTotal;
       const el = document.createElement('div');
-      el.className = 'trail-week' + (complete?' complete':'') + (isActiveWeek?' active':'');
+      el.className = 'trail-week' + (complete?' complete':'') + (isActiveWeek?' active':'') + (week.learn?' learn':'');
       el.innerHTML = `<div class="trail-mark">${wi+1}</div><div class="trail-label">${week.range.split('–')[0]}</div>`;
       el.addEventListener('click', () => {
         const target = document.getElementById('week-'+wi);
@@ -536,7 +492,6 @@
     await Promise.all(allDates.map(loadDay));
     renderAll();
 
-    // auto-open today's card if present
     const today = todayStr();
     const todayCard = document.getElementById('card-' + today);
     if(todayCard){
