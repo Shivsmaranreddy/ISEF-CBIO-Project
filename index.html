@@ -1,0 +1,563 @@
+<!-- Sheep Biomodeling Project — Daily Field Log -->
+<style>
+  :root{
+    --paper:#EFECE3;
+    --paper-line:#D8D3C4;
+    --ink:#2B2A25;
+    --ink-soft:#5C584C;
+    --moss:#4B5D46;
+    --moss-deep:#33422F;
+    --clay:#8C5B3E;
+    --gold:#B08B33;
+    --card:#F7F5EE;
+    --done:#4B5D46;
+    --font-head: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    --font-mono: "SF Mono", "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-mono);}
+  .wrap{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+
+  .masthead{
+    border-bottom:3px double var(--ink);
+    padding-bottom:14px;margin-bottom:6px;
+    display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;
+  }
+  .masthead h1{
+    font-family:var(--font-head);font-size:26px;letter-spacing:0.3px;margin:0;color:var(--moss-deep);
+    font-style:italic;
+  }
+  .masthead .dates{font-size:12px;color:var(--ink-soft);letter-spacing:1px;text-transform:uppercase;}
+
+  .subhead{font-size:12.5px;color:var(--ink-soft);margin:10px 0 22px;line-height:1.5;}
+
+  /* Flock trail — signature progress element */
+  .trail{
+    display:flex;gap:3px;align-items:flex-end;margin:18px 0 28px;
+    padding:14px 12px;background:var(--card);border:1px solid var(--paper-line);border-radius:3px;
+  }
+  .trail-week{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;}
+  .trail-mark{
+    width:100%;height:26px;border-radius:2px;background:#E3DFD2;border:1px solid var(--paper-line);
+    display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--ink-soft);
+    transition:background .25s;
+  }
+  .trail-week.complete .trail-mark{background:var(--moss);color:#F7F5EE;border-color:var(--moss-deep);}
+  .trail-week.active .trail-mark{outline:2px solid var(--clay);outline-offset:1px;}
+  .trail-label{font-size:9.5px;color:var(--ink-soft);text-align:center;}
+
+  .progress-line{font-size:12px;color:var(--moss-deep);margin-bottom:6px;letter-spacing:0.5px;}
+  .progress-bar-outer{height:6px;background:#E3DFD2;border-radius:3px;overflow:hidden;}
+  .progress-bar-inner{height:100%;background:var(--moss);transition:width .3s;}
+
+  .week-block{margin-top:34px;}
+  .week-title{
+    font-family:var(--font-head);font-size:17px;color:var(--moss-deep);
+    border-bottom:1px solid var(--paper-line);padding-bottom:6px;margin-bottom:12px;
+    display:flex;justify-content:space-between;align-items:baseline;
+  }
+  .week-title small{font-family:var(--font-mono);font-size:11px;color:var(--ink-soft);}
+
+  .day-card{
+    background:var(--card);border:1px solid var(--paper-line);border-radius:3px;
+    margin-bottom:10px;overflow:hidden;
+  }
+  .day-header{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 14px;cursor:pointer;user-select:none;
+  }
+  .day-date{font-size:12.5px;color:var(--ink);font-weight:600;letter-spacing:0.3px;}
+  .day-title{font-size:12px;color:var(--ink-soft);margin-left:10px;}
+  .day-status{font-size:11px;color:var(--moss-deep);white-space:nowrap;}
+  .day-status.empty{color:var(--ink-soft);}
+
+  .day-tasks{padding:0 14px 12px 14px;display:none;border-top:1px dashed var(--paper-line);}
+  .day-card.open .day-tasks{display:block;}
+  .day-card.open .chevron{transform:rotate(90deg);}
+  .chevron{display:inline-block;transition:transform .15s;color:var(--ink-soft);margin-left:8px;}
+
+  .task-row{
+    display:flex;align-items:flex-start;gap:9px;padding:8px 0;font-size:12.5px;line-height:1.45;
+    border-bottom:1px solid #EAE6D9;
+  }
+  .task-row:last-child{border-bottom:none;}
+  .task-row input[type=checkbox]{
+    margin-top:2px;width:15px;height:15px;accent-color:var(--moss);cursor:pointer;flex-shrink:0;
+  }
+  .task-row label{cursor:pointer;color:var(--ink);}
+  .task-row.checked label{color:var(--ink-soft);text-decoration:line-through;}
+
+  .note-row{padding:8px 0 2px;}
+  .note-row textarea{
+    width:100%;min-height:34px;resize:vertical;font-family:var(--font-mono);font-size:11.5px;
+    background:#FBFAF6;border:1px solid var(--paper-line);border-radius:2px;padding:6px 8px;color:var(--ink);
+  }
+  .note-label{font-size:10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+
+  .reset-bar{margin-top:34px;text-align:center;}
+  .reset-btn{
+    font-family:var(--font-mono);font-size:11px;color:var(--clay);background:none;border:1px solid var(--clay);
+    padding:6px 14px;border-radius:3px;cursor:pointer;
+  }
+  .reset-btn:hover{background:var(--clay);color:#F7F5EE;}
+
+  .loading{text-align:center;padding:40px;color:var(--ink-soft);font-size:12px;}
+  .err{color:#8C5B3E;font-size:11px;text-align:center;padding:8px;}
+
+  @media (max-width:560px){
+    .trail{overflow-x:auto;}
+    .trail-week{min-width:34px;}
+    .day-title{display:none;}
+  }
+</style>
+
+<div class="wrap">
+  <div class="masthead">
+    <h1>Flock Ledger</h1>
+    <div class="dates">11 Aug – 01 Oct 2026</div>
+  </div>
+  <div class="subhead">
+    Daily field log for the sheep biomodeling project — mortality, feed, growth, pregnancy and breeding models, with the Kalman/RL adaptive layer. Tap a week marker or a day to open it. Checks are saved automatically.
+  </div>
+
+  <div class="progress-line" id="overallLine">Loading progress…</div>
+  <div class="progress-bar-outer"><div class="progress-bar-inner" id="overallBar" style="width:0%"></div></div>
+
+  <div class="trail" id="trail"></div>
+
+  <div id="weeksContainer" class="loading">Loading your ledger…</div>
+
+  <div class="reset-bar">
+    <button class="reset-btn" id="resetBtn">Clear all checks</button>
+  </div>
+</div>
+
+<script>
+(function(){
+
+  const WEEKS = [
+    { label: "Week 1 · Foundations", range: "Aug 11–17", days: [
+      { date: "2026-08-11", title: "Env setup + toy ODE", tasks: [
+        "Set up Python (Colab/Jupyter); confirm scipy, numpy, pandas import cleanly",
+        "Run solve_ivp on a toy exponential-decay example",
+        "Create Zotero library; add 3 seed references"
+      ]},
+      { date: "2026-08-12", title: "Curve fitting + mortality data", tasks: [
+        "Practice curve_fit on synthetic data",
+        "Pull lamb mortality farm records into a working CSV",
+        "Read 1 paper on hazard/survival models in livestock"
+      ]},
+      { date: "2026-08-13", title: "Clean mortality data", tasks: [
+        "Clean mortality data — missing values, consistent units",
+        "Practice solve_ivp on a 2-compartment toy model",
+        "Log every data source in Zotero with full citation"
+      ]},
+      { date: "2026-08-14", title: "Feed data + LP basics", tasks: [
+        "Pull feed ingredient list, costs, ICAR nutrient tables",
+        "Solve one toy linear programming problem in PuLP",
+        "Watch 1 RL intro video — state/action/reward"
+      ]},
+      { date: "2026-08-15", title: "Clean feed + growth data", tasks: [
+        "Clean feed dataset; build nutrient requirement reference table",
+        "Pull weight-at-age records per animal",
+        "Watch 1 more RL intro video"
+      ]},
+      { date: "2026-08-16", title: "Clean growth + pregnancy data", tasks: [
+        "Clean growth data; flag missing/irregular ages",
+        "Pull pregnancy & breeding records (BCS, mating dates, outcomes)",
+        "Draft state / action / reward definitions on paper"
+      ]},
+      { date: "2026-08-17", title: "Week 1 review", tasks: [
+        "Confirm all 5 datasets are cleaned and saved",
+        "Note open data gaps per model",
+        "Review week goals vs. actual — adjust week 2 if behind"
+      ]}
+    ]},
+
+    { label: "Week 2 · Baseline ODEs", range: "Aug 18–24", days: [
+      { date: "2026-08-18", title: "Mortality — build", tasks: [
+        "Build hazard-decay ODE skeleton (dS/dt = -h·S)",
+        "Fit logistic regression coefficients on real data"
+      ]},
+      { date: "2026-08-19", title: "Mortality — validate", tasks: [
+        "Plot fitted survival curve vs. real data",
+        "Sanity-check hazard direction/magnitude makes sense"
+      ]},
+      { date: "2026-08-20", title: "Feed — build", tasks: [
+        "Build LP ration model (or rumen-pool ODE) in PuLP/scipy",
+        "Run baseline least-cost ration optimization"
+      ]},
+      { date: "2026-08-21", title: "Feed — validate", tasks: [
+        "Check optimized ration meets all nutrient constraints",
+        "Compare against your farm's actual current ration"
+      ]},
+      { date: "2026-08-22", title: "Growth — build & fit", tasks: [
+        "Fit Gompertz curve per breed using curve_fit",
+        "Plot fitted curves against real weight-at-age points"
+      ]},
+      { date: "2026-08-23", title: "Pregnancy — build", tasks: [
+        "Build reproductive-state ODE (Open→Bred→Pregnant→Lambed)",
+        "Estimate transition rates from real breeding records"
+      ]},
+      { date: "2026-08-24", title: "Breeding — build + week review", tasks: [
+        "Build selection-index / Price-equation baseline",
+        "Review all 5 baseline models side by side",
+        "List which models look strongest going into validation week"
+      ]}
+    ]},
+
+    { label: "Week 3 · Validate & choose priority", range: "Aug 25–31", days: [
+      { date: "2026-08-25", title: "Fit checks — Mortality + Growth", tasks: [
+        "Goodness-of-fit check: Mortality model",
+        "Goodness-of-fit check: Growth model"
+      ]},
+      { date: "2026-08-26", title: "Fit checks — Feed + Pregnancy", tasks: [
+        "Validate Feed model output against real constraints",
+        "Goodness-of-fit check: Pregnancy model"
+      ]},
+      { date: "2026-08-27", title: "Fit checks — Breeding + sensitivity setup", tasks: [
+        "Sanity-check Breeding model projections",
+        "Set up sensitivity analysis framework (±10–20% parameter sweep)"
+      ]},
+      { date: "2026-08-28", title: "Run sensitivity analysis", tasks: [
+        "Run sensitivity sweep across all 5 models",
+        "Record which parameters move outcomes the most"
+      ]},
+      { date: "2026-08-29", title: "Literature sanity-check", tasks: [
+        "Compare fitted parameters against published values",
+        "Flag any wildly divergent results for a bug check"
+      ]},
+      { date: "2026-08-30", title: "Choose priority model(s)", tasks: [
+        "Decide which 1–2 models get the Kalman/RL layer",
+        "Write a short justification (data richness/quality)"
+      ]},
+      { date: "2026-08-31", title: "Mentor review of baselines", tasks: [
+        "Walk mentor through all 5 baseline models",
+        "Document open issues / questions before month 2"
+      ]}
+    ]},
+
+    { label: "Week 4 · Kalman baseline", range: "Sep 1–7", days: [
+      { date: "2026-09-01", title: "Kalman basics", tasks: [
+        "Learn filterpy basics with a toy Kalman example",
+        "Read a short primer on state-space models"
+      ]},
+      { date: "2026-09-02", title: "State-space formulation", tasks: [
+        "Write priority model's ODE in state-space form",
+        "Identify which parameter(s) will be adaptively updated"
+      ]},
+      { date: "2026-09-03", title: "Implement filter", tasks: [
+        "Implement Kalman update step in code",
+        "Run on a short synthetic test sequence first"
+      ]},
+      { date: "2026-09-04", title: "Run on real data", tasks: [
+        "Run Kalman-updated model on real sequential farm data",
+        "Plot parameter estimate evolving over time"
+      ]},
+      { date: "2026-09-05", title: "Compare vs static fit", tasks: [
+        "Compare Kalman-updated predictions vs. static-fit predictions",
+        "Compute error metrics for both"
+      ]},
+      { date: "2026-09-06", title: "Debug & refine", tasks: [
+        "Debug/refine Kalman implementation",
+        "Re-run and re-check error metrics"
+      ]},
+      { date: "2026-09-07", title: "Document + prep RL", tasks: [
+        "Write up Kalman results (this is your guaranteed baseline)",
+        "Sketch the RL environment design on paper"
+      ]}
+    ]},
+
+    { label: "Week 5 · RL layer", range: "Sep 8–14", days: [
+      { date: "2026-09-08", title: "RL setup", tasks: [
+        "Install gymnasium + stable-baselines3",
+        "Run a stock toy RL example to confirm setup works"
+      ]},
+      { date: "2026-09-09", title: "Custom environment", tasks: [
+        "Define custom Gym environment wrapping priority ODE model",
+        "Confirm environment resets/steps without errors"
+      ]},
+      { date: "2026-09-10", title: "Reward function", tasks: [
+        "Define reward function (negative prediction error)",
+        "Sanity-check reward values on a few manual steps"
+      ]},
+      { date: "2026-09-11", title: "First training run", tasks: [
+        "Run first PPO/DQN training pass",
+        "Confirm training runs end-to-end without crashing"
+      ]},
+      { date: "2026-09-12", title: "Tune training", tasks: [
+        "Adjust episodes/learning rate",
+        "Monitor reward curve for signs of learning"
+      ]},
+      { date: "2026-09-13", title: "Compare all three", tasks: [
+        "Compare RL agent vs. Kalman baseline vs. static fit",
+        "Tabulate error metrics for all three approaches"
+      ]},
+      { date: "2026-09-14", title: "Document honestly", tasks: [
+        "Write up RL results, including limitations if it underperforms",
+        "Decide final framing (RL layer vs. Kalman-only) for the paper"
+      ]}
+    ]},
+
+    { label: "Week 6 · Consolidate", range: "Sep 15–21", days: [
+      { date: "2026-09-15", title: "Debug buffer", tasks: [
+        "Use as buffer day if RL/Kalman needs more debugging",
+        "Otherwise: finalize priority model's full results"
+      ]},
+      { date: "2026-09-16", title: "Write-up: Mortality", tasks: [
+        "Finalize Lamb Mortality methods + results section notes"
+      ]},
+      { date: "2026-09-17", title: "Write-up: Feed", tasks: [
+        "Finalize Feed Optimization methods + results section notes"
+      ]},
+      { date: "2026-09-18", title: "Write-up: Growth", tasks: [
+        "Finalize Growth model methods + results section notes"
+      ]},
+      { date: "2026-09-19", title: "Write-up: Pregnancy", tasks: [
+        "Finalize Pregnancy model methods + results section notes"
+      ]},
+      { date: "2026-09-20", title: "Write-up: Breeding", tasks: [
+        "Finalize Breeding model methods + results section notes"
+      ]},
+      { date: "2026-09-21", title: "Figures + citations pass", tasks: [
+        "Compile all figures into one folder",
+        "Confirm every figure has a citation/credit line"
+      ]}
+    ]},
+
+    { label: "Week 7 · Write the paper", range: "Sep 22–28", days: [
+      { date: "2026-09-22", title: "Introduction", tasks: [
+        "Write Introduction + literature review section"
+      ]},
+      { date: "2026-09-23", title: "Methods", tasks: [
+        "Write Methods section covering all 5 models + AI layer"
+      ]},
+      { date: "2026-09-24", title: "Results", tasks: [
+        "Write Results section with figures and tables"
+      ]},
+      { date: "2026-09-25", title: "Discussion", tasks: [
+        "Write Discussion section — interpretation + limitations"
+      ]},
+      { date: "2026-09-26", title: "Conclusion + references", tasks: [
+        "Write Conclusion",
+        "Check all references formatted consistently (APA/IEEE via Zotero)"
+      ]},
+      { date: "2026-09-27", title: "Abstract + quad chart draft", tasks: [
+        "Draft 250-word abstract",
+        "Draft quad chart content (4 quadrants)"
+      ]},
+      { date: "2026-09-28", title: "Quad chart + AI disclosure", tasks: [
+        "Build quad chart image in Canva (light bg, dark text, 18pt+ font)",
+        "Write up AI usage disclosure summary from your prompt log"
+      ]}
+    ]},
+
+    { label: "Buffer · Finish & submit", range: "Sep 29–Oct 1", days: [
+      { date: "2026-09-29", title: "Mentor review pass", tasks: [
+        "Full mentor review of paper + abstract + quad chart",
+        "Revise based on feedback"
+      ]},
+      { date: "2026-09-30", title: "Video + final citation check", tasks: [
+        "Record 90-second project video",
+        "Final pass: every graphic cited, every claim sourced"
+      ]},
+      { date: "2026-10-01", title: "Submit", tasks: [
+        "Confirm all files ready: synopsis, paper, video",
+        "Submit on IRIS website",
+        "Save a backup copy of everything submitted"
+      ]}
+    ]}
+  ];
+
+  const weeksContainer = document.getElementById('weeksContainer');
+  const trail = document.getElementById('trail');
+  const overallLine = document.getElementById('overallLine');
+  const overallBar = document.getElementById('overallBar');
+  const resetBtn = document.getElementById('resetBtn');
+
+  let allState = {}; // { "2026-08-11": [true,false,...] }
+  let allNotes = {}; // { "2026-08-11": "note text" }
+
+  function todayStr(){
+    const d = new Date();
+    return d.toISOString().slice(0,10);
+  }
+
+  async function loadDay(date){
+    try{
+      const res = await window.storage.get('checks:' + date);
+      allState[date] = res ? JSON.parse(res.value) : null;
+    }catch(e){ allState[date] = null; }
+    try{
+      const res2 = await window.storage.get('note:' + date);
+      allNotes[date] = res2 ? res2.value : '';
+    }catch(e){ allNotes[date] = ''; }
+  }
+
+  async function saveDay(date, checksArr){
+    try{
+      await window.storage.set('checks:' + date, JSON.stringify(checksArr));
+    }catch(e){ console.error('save failed', e); }
+  }
+
+  async function saveNote(date, text){
+    try{
+      await window.storage.set('note:' + date, text);
+    }catch(e){ console.error('note save failed', e); }
+  }
+
+  function dayCompletion(date, taskCount){
+    const st = allState[date];
+    if(!st) return 0;
+    return st.filter(Boolean).length;
+  }
+
+  function renderAll(){
+    weeksContainer.innerHTML = '';
+    weeksContainer.classList.remove('loading');
+
+    let totalTasks = 0, totalDone = 0;
+
+    WEEKS.forEach((week, wi) => {
+      let weekTotal = 0, weekDone = 0;
+      week.days.forEach(day => {
+        weekTotal += day.tasks.length;
+        weekDone += dayCompletion(day.date, day.tasks.length);
+      });
+      totalTasks += weekTotal;
+      totalDone += weekDone;
+
+      const wb = document.createElement('div');
+      wb.className = 'week-block';
+      wb.id = 'week-' + wi;
+      const wt = document.createElement('div');
+      wt.className = 'week-title';
+      wt.innerHTML = `<span>${week.label}</span><small>${week.range} · ${weekDone}/${weekTotal}</small>`;
+      wb.appendChild(wt);
+
+      week.days.forEach(day => {
+        const done = dayCompletion(day.date, day.tasks.length);
+        const total = day.tasks.length;
+        const card = document.createElement('div');
+        card.className = 'day-card';
+        card.id = 'card-' + day.date;
+
+        const header = document.createElement('div');
+        header.className = 'day-header';
+        header.innerHTML = `
+          <span><span class="day-date">${formatDate(day.date)}</span><span class="day-title">${day.title}</span></span>
+          <span class="day-status ${done===0?'empty':''}">${done}/${total}<span class="chevron">›</span></span>
+        `;
+        header.addEventListener('click', () => {
+          card.classList.toggle('open');
+        });
+        card.appendChild(header);
+
+        const taskWrap = document.createElement('div');
+        taskWrap.className = 'day-tasks';
+
+        const st = allState[day.date] || day.tasks.map(()=>false);
+        day.tasks.forEach((taskText, ti) => {
+          const row = document.createElement('div');
+          row.className = 'task-row' + (st[ti] ? ' checked' : '');
+          const cbId = 'cb-' + day.date + '-' + ti;
+          row.innerHTML = `<input type="checkbox" id="${cbId}" ${st[ti]?'checked':''}/><label for="${cbId}">${taskText}</label>`;
+          const cb = row.querySelector('input');
+          cb.addEventListener('change', async () => {
+            const arr = allState[day.date] || day.tasks.map(()=>false);
+            arr[ti] = cb.checked;
+            allState[day.date] = arr;
+            row.classList.toggle('checked', cb.checked);
+            await saveDay(day.date, arr);
+            renderAll(); // refresh counts/progress
+            // re-open the same card after re-render
+            const reopened = document.getElementById('card-' + day.date);
+            if(reopened) reopened.classList.add('open');
+          });
+          taskWrap.appendChild(row);
+        });
+
+        const noteRow = document.createElement('div');
+        noteRow.className = 'note-row';
+        noteRow.innerHTML = `<div class="note-label">Notes</div><textarea placeholder="What actually happened, blockers, farm observations…">${allNotes[day.date]||''}</textarea>`;
+        const ta = noteRow.querySelector('textarea');
+        let debounceTimer;
+        ta.addEventListener('input', () => {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => saveNote(day.date, ta.value), 500);
+        });
+        taskWrap.appendChild(noteRow);
+
+        card.appendChild(taskWrap);
+        wb.appendChild(card);
+      });
+
+      weeksContainer.appendChild(wb);
+    });
+
+    overallLine.textContent = `${totalDone} of ${totalTasks} checks logged`;
+    overallBar.style.width = totalTasks ? ((totalDone/totalTasks)*100).toFixed(1) + '%' : '0%';
+
+    renderTrail();
+  }
+
+  function renderTrail(){
+    trail.innerHTML = '';
+    const today = todayStr();
+    WEEKS.forEach((week, wi) => {
+      let weekTotal = 0, weekDone = 0;
+      let isActiveWeek = false;
+      week.days.forEach(day => {
+        weekTotal += day.tasks.length;
+        weekDone += dayCompletion(day.date, day.tasks.length);
+        if(day.date === today) isActiveWeek = true;
+      });
+      const complete = weekTotal>0 && weekDone === weekTotal;
+      const el = document.createElement('div');
+      el.className = 'trail-week' + (complete?' complete':'') + (isActiveWeek?' active':'');
+      el.innerHTML = `<div class="trail-mark">${wi+1}</div><div class="trail-label">${week.range.split('–')[0]}</div>`;
+      el.addEventListener('click', () => {
+        const target = document.getElementById('week-'+wi);
+        if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+      });
+      trail.appendChild(el);
+    });
+  }
+
+  function formatDate(iso){
+    const d = new Date(iso + 'T00:00:00');
+    const opts = { weekday: 'short', month: 'short', day: 'numeric' };
+    return d.toLocaleDateString('en-US', opts);
+  }
+
+  async function init(){
+    const allDates = [];
+    WEEKS.forEach(w => w.days.forEach(d => allDates.push(d.date)));
+    await Promise.all(allDates.map(loadDay));
+    renderAll();
+
+    // auto-open today's card if present
+    const today = todayStr();
+    const todayCard = document.getElementById('card-' + today);
+    if(todayCard){
+      todayCard.classList.add('open');
+      setTimeout(()=> todayCard.scrollIntoView({behavior:'smooth', block:'center'}), 300);
+    }
+  }
+
+  resetBtn.addEventListener('click', async () => {
+    if(!confirm('Clear all checks and notes? This cannot be undone.')) return;
+    const allDates = [];
+    WEEKS.forEach(w => w.days.forEach(d => allDates.push(d.date)));
+    for(const date of allDates){
+      try{ await window.storage.delete('checks:' + date); }catch(e){}
+      try{ await window.storage.delete('note:' + date); }catch(e){}
+      allState[date] = null;
+      allNotes[date] = '';
+    }
+    renderAll();
+  });
+
+  init();
+})();
+</script>
